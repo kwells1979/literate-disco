@@ -1,3 +1,4 @@
+import os
 import requests
 from icalendar import Calendar, Event
 from datetime import datetime, date, time
