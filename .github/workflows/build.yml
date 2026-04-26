@@ -1,0 +1,44 @@
+import requests
+from icalendar import Calendar
+from datetime import datetime, date, time, timezone
+from zoneinfo import ZoneInfo
+
+SOURCE_ICS = "YOUR_BIG_ICS_URL"
+OUTPUT_FILE = "today.ics"
+TZ = ZoneInfo("Europe/London")
+
+today = datetime.now(TZ).date()
+start_of_day = datetime.combine(today, time.min, TZ)
+end_of_day = datetime.combine(today, time.max, TZ)
+
+response = requests.get(SOURCE_ICS)
+response.raise_for_status()
+
+source_cal = Calendar.from_ical(response.content)
+new_cal = Calendar()
+
+for key, value in source_cal.items():
+    if key not in ["VEVENT", "VTODO", "VJOURNAL"]:
+        new_cal.add(key, value)
+
+for component in source_cal.walk("VEVENT"):
+    event_start = component.get("dtstart").dt
+    event_end = component.get("dtend").dt if component.get("dtend") else event_start
+
+    if isinstance(event_start, date) and not isinstance(event_start, datetime):
+        event_start = datetime.combine(event_start, time.min, TZ)
+
+    if isinstance(event_end, date) and not isinstance(event_end, datetime):
+        event_end = datetime.combine(event_end, time.max, TZ)
+
+    if event_start.tzinfo is None:
+        event_start = event_start.replace(tzinfo=TZ)
+
+    if event_end.tzinfo is None:
+        event_end = event_end.replace(tzinfo=TZ)
+
+    if event_start <= end_of_day and event_end >= start_of_day:
+        new_cal.add_component(component)
+
+with open(OUTPUT_FILE, "wb") as f:
+    f.write(new_cal.to_ical())
