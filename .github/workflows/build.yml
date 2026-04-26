@@ -25,6 +25,8 @@ jobs:
         run: pip install requests icalendar
 
       - name: Run script
+        env:
+          ICS_URL: ${{ secrets.ICS_URL }}
         run: python filter_ics.py
 
       - name: Commit file
