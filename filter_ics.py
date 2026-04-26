@@ -4,6 +4,8 @@ from datetime import datetime, date, time
 from zoneinfo import ZoneInfo
 
 SOURCE_ICS = os.environ.get("ICS_URL")
+if not SOURCE_ICS:
+    raise ValueError("ICS_URL environment variable not set")
 OUTPUT_FILE = "today.ics"
 TZ = ZoneInfo("Europe/London")
 
