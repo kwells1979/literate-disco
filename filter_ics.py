@@ -3,7 +3,7 @@ from icalendar import Calendar, Event
 from datetime import datetime, date, time
 from zoneinfo import ZoneInfo
 
-SOURCE_ICS = "https://outlook.office365.com/owa/calendar/0a110018d4454ac9b3c86fcb43156cea%40esko.com/fd27ccb1174147848cd752879f18f1479525955952632881177/calendar.ics"
+SOURCE_ICS = os.environ.get("ICS_URL")
 OUTPUT_FILE = "today.ics"
 TZ = ZoneInfo("Europe/London")
 
