@@ -1,72 +1,34 @@
-import requests
-from icalendar import Calendar, Event
-from datetime import datetime, date, time
-from zoneinfo import ZoneInfo
+name: Build today ICS
 
-# --- CONFIG ---
-SOURCE_ICS = "https://outlook.office365.com/owa/calendar/0a110018d4454ac9b3c86fcb43156cea%40esko.com/fd27ccb1174147848cd752879f18f1479525955952632881177/calendar.ics"
-OUTPUT_FILE = "today.ics"
-TZ = ZoneInfo("Europe/London")
+on:
+  schedule:
+    - cron: "5 0 * * *"
+  workflow_dispatch:
 
-# --- TIME WINDOW (TODAY) ---
-now = datetime.now(TZ)
-today = now.date()
+permissions:
+  contents: write
 
-start_of_day = datetime.combine(today, time.min).replace(tzinfo=TZ)
-end_of_day = datetime.combine(today, time.max).replace(tzinfo=TZ)
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-# --- FETCH ICS ---
-response = requests.get(SOURCE_ICS)
-response.raise_for_status()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-source_cal = Calendar.from_ical(response.content)
-new_cal = Calendar()
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-# Copy top-level properties
-for key, value in source_cal.items():
-    if key not in ["VEVENT"]:
-        new_cal.add(key, value)
+      - name: Install deps
+        run: pip install requests icalendar
 
-# --- PROCESS EVENTS ---
-for component in source_cal.walk():
-    if component.name != "VEVENT":
-        continue
+      - name: Run script
+        run: python filter_ics.py
 
-    event_start = component.get("dtstart").dt
-    event_end = component.get("dtend").dt if component.get("dtend") else event_start
-
-    # Convert date-only → datetime
-    if isinstance(event_start, date) and not isinstance(event_start, datetime):
-        event_start = datetime.combine(event_start, time.min)
-
-    if isinstance(event_end, date) and not isinstance(event_end, datetime):
-        event_end = datetime.combine(event_end, time.max)
-
-    # Apply timezone if missing
-    if event_start.tzinfo is None:
-        event_start = event_start.replace(tzinfo=TZ)
-
-    if event_end.tzinfo is None:
-        event_end = event_end.replace(tzinfo=TZ)
-
-    # Check if event overlaps today
-    if not (event_start <= end_of_day and event_end >= start_of_day):
-        continue
-
-    # --- CLEAN EVENT ---
-    new_event = Event()
-
-    for key in component.keys():
-        # Skip heavy / unnecessary fields
-        if key in ["ATTENDEE", "VALARM", "DESCRIPTION", "CLASS"]:
-            continue
-
-        new_event.add(key, component.get(key))
-
-    new_cal.add_component(new_event)
-
-# --- SAVE FILE ---
-with open(OUTPUT_FILE, "wb") as f:
-    f.write(new_cal.to_ical())
-
-print("today.ics generated successfully")
+      - name: Commit file
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: today.ics
+          message: Update today ICS
