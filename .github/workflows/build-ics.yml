@@ -21,10 +21,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install deps
-        run: pip install requests icalendar
+      - name: Install dependencies
+        run: pip install requests icalendar python-dateutil
 
-      - name: Run script
+      - name: Run ICS filter script
         env:
           ICS_URL: ${{ secrets.ICS_URL }}
         run: python filter_ics.py
