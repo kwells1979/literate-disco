@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -22,7 +22,8 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install requests icalendar python-dateutil
+        run: |
+          pip install requests icalendar recurring-ical-events python-dateutil
 
       - name: Run ICS filter script
         env:
