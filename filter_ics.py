@@ -16,9 +16,9 @@ LONDON_TZ = ZoneInfo("Europe/London")
 now = datetime.now(LONDON_TZ)
 today = now.date()
 
-# Today + next 5 days = 6 days total
+# Today + next 6 days = 7 days total
 start_of_period = datetime.combine(today, time.min).replace(tzinfo=LONDON_TZ)
-end_of_period = start_of_period + timedelta(days=6)
+end_of_period = start_of_period + timedelta(days=7)
 
 response = requests.get(SOURCE_ICS, timeout=30)
 response.raise_for_status()
@@ -31,7 +31,7 @@ for key, value in source_cal.items():
     if key != "VEVENT":
         new_cal.add(key, value)
 
-# Expand recurring events and filter to the next 6 days
+# Expand recurring events and filter to the next 7 days
 events = recurring_ical_events.of(source_cal).between(start_of_period, end_of_period)
 
 for component in events:
@@ -73,4 +73,4 @@ for component in events:
 with open(OUTPUT_FILE, "wb") as f:
     f.write(new_cal.to_ical())
 
-print(f"today.ics generated — {len(events)} event(s) from {today} for 6 days")
+print(f"today.ics generated — {len(events)} event(s) from {today} for 7 days")
